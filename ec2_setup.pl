@@ -21,7 +21,7 @@ repository in order to have the best experience using this script.\n\n";
 
 my $setup = EC2_Setup->new;
 my $categories = ["Web Servers + Scripting Languages", "Web Server"];
-my $servers_and_langs = ["PHP + Apache + MySQL", "PHP + Lighthttpd + MySQL", "PHP + Nginx + MySQL", "RubyGems + Rails", "Node JS + NPM"];
+my $servers_and_langs = ["PHP + Apache + MySQL", "PHP + Lighttpd + MySQL", "PHP + Nginx + MySQL", "RubyGems + Rails", "Node JS + NPM"];
 my $servers = ["Apache", "Lighttpd", "Nginx", "Tornado", "Yaws", "Jetty", "Tomcat"];
 my $misc = ["phpMyAdmin", "Memcached", "APC", "Varnish Cache", "Redis", "Composer"];
 my $sql_servers = [];
