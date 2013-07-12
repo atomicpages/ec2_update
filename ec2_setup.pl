@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.6.7.1
+# version 0.6.7.2
 
 use warnings;
 use strict;
@@ -120,8 +120,9 @@ if($category_choice eq "1") {
 							}
 						}
 						$setup->log_event("User selected to use Aptitude to install LAMP stack");
-						my $lamp = "apache2 apache2-mpm-prefork apache2-utils apache2.2-common libapache2-mod-php5 libapr1 libaprutil1 libdbd-mysql-perl libdbi-perl libnet-daemon-perl libplrpc-perl libpq5 mysql-client-5.5 mysql-common mysql-server mysql-server-5.5 php5-common php5-mysql";
+						my $lamp = "apache2 apache2-mpm-prefork apache2-utils libapr1 libaprutil1 libdbd-mysql-perl libdbi-perl libnet-daemon-perl libplrpc-perl libpq5 mysql-client-5.5 mysql-common mysql-server mysql-server-5.5 php5 php5-cgi php5-common php5-mysql php5-cli";
 						system("sudo apt-get -y install " . $lamp);
+						system("sudo service start apache2");
 					}
 				}
 			}
