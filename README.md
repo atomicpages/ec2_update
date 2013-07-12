@@ -65,8 +65,10 @@ The EC2 Setup script is written entirely in Perl. This reason why is because eve
 
 ##### SQL Clients + Servers
 * MySQL 5.5
-* Postgres SQL ?
+* PostgreSQL 9
 * SQLite 3
+* MongoDB
+* CouchDB
 
 ### Installing EC2 Setup
 Installing EC2 Setup is a matter of running a few terminal commands. If you are unfamiliar with basic BASH commands, fret not. Take the time to become acquainted with BASH. There are many free resources such as:

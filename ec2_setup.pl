@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.6.7
+# version 0.6.7.1
 
 use warnings;
 use strict;
@@ -24,15 +24,24 @@ my $categories = ["Web Servers + Scripting Languages", "Web Server"];
 my $servers_and_langs = ["PHP + Apache + MySQL", "PHP + Lighttpd + MySQL", "PHP + Nginx + MySQL", "RubyGems + Rails", "Node JS + NPM"];
 my $servers = ["Apache", "Lighttpd", "Nginx", "Tornado", "Yaws", "Jetty", "Tomcat"];
 my $misc = ["phpMyAdmin", "Memcached", "APC", "Varnish Cache", "Redis", "Composer"];
-my $sql_servers = [];
+my $databases = ["MongoDB", "MySQL", "PostgreSQL", "SQLite", "CouchDB"];
+# Need to compile from source on Amazon Linux
+# MongoDB
+# CouchDB
 
+my $update = get_user_yesno("Run software update", 1);
 if($setup->pkg_mgr() eq "apt-get") {
-	my $update = get_user_yesno("Run software update", 1);
 	if($update =~ /y|yes/i) {
 		$setup->log_event("Updating aptitude repository...");
-		system("sudo apt-get update && sudo apt-get upgrade");
+		system("sudo apt-get update && sudo apt-get -y upgrade");
 		$setup->log_event("Aptitude repository update complete!");
 	}
+}
+if($setup->pkg_mgr() eq "yum") {
+	if($update =~ /y|yes/i) {
+		$setup->log_event("Updating yum repository...");
+		system("sudo yum -y update");
+		$setup->log_event("Yum update complete!");
 }
 
 my $category_choice = &get_user_option(
@@ -115,7 +124,38 @@ if($category_choice eq "1") {
 					}
 				}
 			}
-			case 2 	{ }
+			case 2 	{
+				my $php = get_user_option(
+					"Please select your preferred PHP version and press [ENTER]:",
+					[
+						"PHP 5.3.x",
+						"PHP 5.4.x",
+					]
+				);
+				my $llmp = "";
+				if($setup->distro() eq "ubuntu") {
+					if($php eq "2") {
+						my $decision = &get_user_yesno(
+							colored("Warning: ", "bold yellow") . "You chose to install PHP 5.4.x. Unfortunately aptitude does not have an official PPA for PHP 5.4.x. Do you wish to add https://launchpad.net/~ondrej/+archive/php5 " . $setup->codename() . " main to your list of repositories"
+						);
+						if($decision =~ /y|yes/i) {
+							add_repo("ppa:ondrej/php5");
+						}
+					}
+					$llmp = "lighttpd php5 php5-mysql php5-cli php5-gd php5-cgi php5-mcrypt";
+				} else {
+					$llmp = "lighttpd lighttpd-fastcgi mysql55 mysql55-server";
+				}
+				$setup->log_event("Starting LLMP Install...");
+				system("sudo apt-get install " . $llmp);
+				$setup->log_event("Enabling fastcgi module...");
+				system("sudo lighty-enable-mod fastcgi");
+				$setup->log_event("Enabling fastcgi-php module...");
+				system("sudo lighty-enable-mod fastcgi-php");
+				$setup->log_event("Restarting Lighttpd");
+				system("sudo service lighttpd force-reload");
+				$setup->log_event("LLMP install complete!");
+			}
 			case 3 	{ }
 			case 4 	{ }
 			case 5 	{ }
