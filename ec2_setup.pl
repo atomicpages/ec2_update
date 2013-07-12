@@ -42,6 +42,7 @@ if($setup->pkg_mgr() eq "yum") {
 		$setup->log_event("Updating yum repository...");
 		system("sudo yum -y update");
 		$setup->log_event("Yum update complete!");
+	}
 }
 
 my $category_choice = &get_user_option(
