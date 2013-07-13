@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.6.7.2
+# version 0.6.7.3
 
 use warnings;
 use strict;
@@ -45,13 +45,13 @@ if($setup->pkg_mgr() eq "yum") {
 	}
 }
 
-my $category_choice = &get_user_option(
+my $category_choice = get_user_option(
 	"Please type the number of the category of software you wish to install and press [ENTER]:", 
 	$categories
 );
 
 if($category_choice eq "1") {
-	my $server_lang = &get_user_option(
+	my $server_lang = get_user_option(
 		"Please select your preferred scripting language + web server from the list below and press [ENTER]:", 
 		$servers_and_langs
 	);
@@ -82,47 +82,56 @@ if($category_choice eq "1") {
 
 					$lamp = "aspell aspell-en aspell-fr aspell-es cvs " . $apache . " mysql mysql-server " . $php . " " . $php . "-cli " . $php . "-gd php-intl " . $php . "-mbstring " . $php . "-mysql " . $php . "-pdo " . $php . "-soap " . $php . "-xml " . $php . "-xmlrpc " . $php . "-pspell";
 					$setup->log_event("Starting LAMP installation...");
-					system($lamp);
+					system("sudo yum install -y " . $lamp);
 					$setup->log_event("LAMP install complete!");
 					$setup->log_event("Adding Apache and MySQL to startup...");
 					system("sudo /sbin/chkconfig httpd on");
 					system("sudo /sbin/chkconfig mysqld on");
-					$setup->log_event("Starting Apache and MySQL");
+					$setup->log_event("Starting Apache and MySQL services");
 					system("sudo service httpd start");
 					system("sudo service mysqld start");
+					$setup->log_event("Setting up MySQL root user");
 					print "Setting up MySQL root user. Please enter a new MySQL admin password and press [ENTER]:\n";
 					my $mysql_pass = <>;
 					chomp($mysql_pass);
 					system("sudo mysqladmin -u root -p '" . $mysql_pass . "'");
+					$setup->log_event("MySQL root user setup is complete!");
+					print colored("Success: ", "bold green") . "LAMP stack installation has completed!";
+					$setup->log_event("LAMP stack install complete!");
+					exit 1;
 				} else { # assume aptitude for the time being
-					my $apt_apache_install = &get_user_option(
-						"Select how you'd like you install Apache and press [ENTER]:",
-						[
-							"Tasksel",
-							"Aptitude Repository"
-						]
-					);
-					if($apt_apache_install eq "1") {
-						# using tasksel by default gives:
-						# installs Apache 2.2.22
-						# installs PHP 5.3.10
-						# as of 7/11/2013
-						$setup->log_event("user selected to use Tasksel to install LAMP stack");
-						system("sudo tasksel install lamp-server");
-						$setup->log_event("Install complete!");
-					} else {
-						if($apache eq "2") {
-							my $decision = &get_user_yesno(
-								colored("Warning: ", "bold yellow") . "You chose to install Apache 2.4. Unfortunately aptitude does not have an official PPA for Apache 2.4. Do you wish to add http://ppa.launchpad.net/rhardy/apache24x/ " . $setup->codename() . " main to your list of repositories"
-							);
+					if($apache eq "1") {
+						$lamp = "lamp-server^";
+					} else($apache eq "2") {
+						my $decision = get_user_yesno(
+							colored("Warning: ", "bold yellow") . "You chose to install Apache 2.4. Unfortunately aptitude does not have an official PPA for Apache 2.4. Do you wish to add http://ppa.launchpad.net/rhardy/apache24x/ " . $setup->codename() . " main to your list of repositories",
+							1
+						);
+						if($decision =~ /y|yes/i) {
+							add_repo("ppa:ondrej/php5-experimental");
+							$lamp = "apache2 php5 php5-cgi php5-mysql php5-mcrypt mysql-client-5.5 mysql-server-5.5 mysql-server";
+						} else {
+							$setup->log_event("User did not want to install Apache 2.4.x...");
+							my $decision = get_user_yesno("Install Apache 2.2 instead");
 							if($decision =~ /y|yes/i) {
-								add_repo("ppa:rhardy/apache24x");
+								$setup->log_event("Installing Apache 2.2.x instead...");
+								$lamp = "lamp-server^";
 							}
 						}
-						$setup->log_event("User selected to use Aptitude to install LAMP stack");
-						my $lamp = "apache2 apache2-mpm-prefork apache2-utils libapr1 libaprutil1 libdbd-mysql-perl libdbi-perl libnet-daemon-perl libplrpc-perl libpq5 mysql-client-5.5 mysql-common mysql-server mysql-server-5.5 php5 php5-cgi php5-common php5-mysql php5-cli";
-						system("sudo apt-get -y install " . $lamp);
-						system("sudo service start apache2");
+					}
+					$setup->log_event("Starting LAMP install...");
+					system("sudo apt-get -y install " . $lamp);
+					$secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
+					if($secure_mysql =~ /y|yes/i) {
+						$setup->log_event("Securing MySQL");
+						system("sudo mysql_secure_installation");
+						$setup->log_event("MySQL has been secured based on user options!");
+						print colored("Success: ", "bold green") . "LAMP stack has been installed!";
+						exit 1;
+					} else {
+						$setup->log_event("Skipping MySQL hardening...");
+						print colored("Success: ", "bold green") . "LAMP stack has been installed!";
+						exit 1;
 					}
 				}
 			}
@@ -420,12 +429,16 @@ sub add_repo {
 		$setup->log_event("Backing up /etc/apt/sources.list file just in case.");
 		system("sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak");
 		$setup->log_event("Installing python-software-properties");
-		system("sudo apt-get -y install python-software-properties");
+		my $exist = system("add-apt-repository");
+		if($exist == -1) {
+			system("sudo apt-get -y install python-software-properties");
+		}
 		$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
 		$setup->log_event("Adding " . $repo . " to sources.list");
 		system("sudo add-apt-repository " . $repo);
 		$setup->log_event("Updating sources list...");
 		system("sudo apt-get update");
+		$setup->log_event("Sources list update complete, resuming...");
 	}
 
 	return $repo;
