@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.5
+# version 0.1.3.6
 
 use warnings;
 use strict;
@@ -282,7 +282,11 @@ $setup->log_event("lighttpd.conf has been updated!");
 					if($nginx ne "1") {
 						my $decision = get_user_yesno("Would you like to add the " . colored("official", "bold") . " nginx ppa for 1.4.x", 1);
 						if($decision =~ /y|yes/i) {
-							add_repo("ppa:nginx/stable");
+							if($simulate == 0) {
+								add_repo("ppa:nginx/stable");
+							} else {
+								print "Adding ppa:nginx/stable\n";
+							}
 						} else {
 							$setup->log_event("Cancelling Nginx 1.4.x install...");
 							my $decision = get_user_yesno("Install Nginx 1.1.x instead");
@@ -304,7 +308,7 @@ $setup->log_event("lighttpd.conf has been updated!");
 $setup->log_event("Writing values to " . $nginx_def);
 open my $handle, ">", $nginx_def or die $!;
 # spacing counts, hence the indentation
-print $handle "server {
+print $handle 'server {
 	listen 80 default_server;
 	listen [::]:80 default_server ipv6only=on;
 
@@ -344,12 +348,12 @@ print $handle "server {
 		include fastcgi_params;
 	}
 
-	# deny access to .htaccess files, if Apache's document root
-	# concurs with nginx's one
+	# deny access to .htaccess files, if Apache\'s document root
+	# concurs with nginx\'s one
 	location ~ /\.ht {
 		deny all;
 	}
-}\n";
+}'."\n";
 close $handle;
 $setup->log_event("Wrote new values to " . $nginx_def);
 
