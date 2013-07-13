@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.1
+# version 0.1.2
 
 use warnings;
 use strict;
@@ -67,7 +67,7 @@ if($category_choice eq "1") {
 					[
 						"PHP 5.3.x",
 						"PHP 5.4.x",
-						"PHP 5.5.x"
+						$setup->pkg_mgr() eq "apt-get" ? "PHP 5.5.x" : ""	# ppa:ondrej/php5-experimental
 					]
 				);
 				my $lamp = "";
@@ -94,6 +94,7 @@ if($category_choice eq "1") {
 					if($simulate == 0) {
 						$setup->log_event("Starting LAMP install...");
 						system("sudo apt-get -y install " . $lamp);
+						$setup->log_event("LAMP install complete!");
 					} else {
 						print "sudo apt-get -y install " . $lamp . "\n";
 					}
@@ -120,7 +121,71 @@ if($category_choice eq "1") {
 				} # end pkg_mgr apt-get test
 			} # end case 1
 			case 2 {
+				my $php = get_user_option(
+					"Please select your preferred PHP version and press [ENTER]:",
+					[
+						"PHP 5.3.x",										# default
+						"PHP 5.4.x", 										# ppa:ondrej/php5
+						$setup->pkg_mgr() eq "apt-get" ? "PHP 5.5.x" : ""	# ppa:ondrej/php5-experimental
+					]
+				);
+				my $llmp = "";
+				if($setup->pkg_mgr() == "apt-get") {
+					if($php ne "1") {
+						my $decision = get_user_yesno("Ubuntu does not officially have a repository for PHP 5.4.x or 5.5.x. Would you like to add one now", 1);
+						if($decision =~ /y|yes/i) {
+							if($php eq "2") {
+								if($simulate == 0) {
+									add_repo("ppa:ondrej/php5");
+								} else {
+									print "Adding ppa:ondrej/php5\n";
+								}
+							} elsif($php eq "3") {
+								if($simulate == 0) {
+									add_repo("ppa:ondrej/php5-experimental");
+								} else {
+									print "Adding ppa:ondrej/php5-experimental\n";
+								}
+							}
+						} else {
+							if($simulate == 0) {
+								$setup->log_event("Cancelling PHP 5.4.x or 5.5.x install...");
+							}
+							my $decision = get_user_yesno("Install PHP 5.3.x instead");
+							if($simulate == 0) {
+								$setup->log_event("Installing PHP 5.3.x instead!");
+							}
+						}
+					}
+					$llmp = "lighttpd php5 php5-cgi php5-mysql php5-mcrypt php5-cli php5-curl php5-gd mysql-client-5.5 mysql-server-5.5 mysql-server";
+					if($simulate == 0) {
+						$setup->log_event("Starting LLMP install...");
+						system("sudo apt-get -y install " . $llmp);
+						$setup->log_event("LLMP install complete!");
+					} else {
+						print "sudo apt-get -y install " . $llmp . "\n";
+					}
 
+					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
+					if($secure_mysql =~ /y|yes/i) {
+						if($simulate == 0) {
+							$setup->log_event("Securing MySQL");
+							system("sudo mysql_secure_installation");
+							$setup->log_event("MySQL has been secured based on user options!");
+						} else {
+							print "sudo mysql_secure_installation\n";
+						}
+						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
+						exit 1;
+					} else {
+						if($simulate == 0) {
+							$setup->log_event("Skipping MySQL hardening...");
+						}
+						print "Skipping MySQL hardedning on user Command\n";
+						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
+						exit 1;
+					}
+				} # end pkg_mgr apt-get test
 			} # end case 2
 			case 3 {
 
@@ -137,6 +202,30 @@ if($category_choice eq "1") {
 
 # GENERAL HELPER FUNCTIONS
 # ----------------------------------------------------------------- #
+sub harden_mysql {
+	my $stack 			= shift;
+	my $secure_mysql 	= get_user_yesno("Would you like to secure MySQL server", 1);
+
+	if($secure_mysql =~ /y|yes/i) {
+		if($simulate == 0) {
+			$setup->log_event("Securing MySQL");
+			system("sudo mysql_secure_installation");
+			$setup->log_event("MySQL has been secured based on user options!");
+		} else {
+			print "sudo mysql_secure_installation\n";
+		}
+		print colored("Success: ", "bold green") . $stack . " stack has been installed!\n";
+		exit 1;
+	} else {
+		if($simulate == 0) {
+			$setup->log_event("Skipping MySQL hardening...");
+		}
+		print "Skipping MySQL hardedning on user Command\n";
+		print colored("Success: ", "bold green") . $stack . " stack has been installed!\n";
+		exit 1;
+	}
+}
+
 sub get_user_option {
 	my $question 		= shift;
 	my $options 		= shift;
