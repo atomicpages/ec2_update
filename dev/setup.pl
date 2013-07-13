@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.1
+# version 0.1.3.2
 
 use warnings;
 use strict;
@@ -303,11 +303,11 @@ $setup->log_event("Log has been updated!");
 						system("cp " . $nginx_conf . " /etc/nginx/nginx.conf.bak");
 
 						$setup->log_event("Writing values to " . $nginx_conf);
-						open my $in , "<", $file or die "Can't read old file: $!\n";
-						open my $out, ">", $file or die "Can't write new file: $!\n";
+						open my $in , "<", $nginx_conf or die "Can't read to $nginx_conf: $!\n";
+						open my $out, ">", $nginx_conf or die "Can't write $nginx_conf: $!\n";
 						while(<$in>) {
-							my $worker = /s\b(worker_processes)\b\s{1,}\d{1,}/worker_processes 5/g;
-							my $keepalive = /s\b(keepalive_timeout)\b\s{1,}\d{1,}/keepalive_timeout 2/g;
+							my $worker = /s\b("worker_processes")\s{1,}\d{1,}/("worker_processes 5")/g;
+							my $keepalive = /s\b("keepalive_timeout")\s{1,}\d{1,}/("keepalive_timeout 2")/g;
 							print $out $_;
 						}
 						close $out;
@@ -328,14 +328,14 @@ $setup->log_event("Log has been updated!");
 						} else {
 							print "mysql_secure_installation\n";
 						}
-						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
+						print colored("Success: ", "bold green") . "LNMP stack has been installed!\n";
 						exit 1;
 					} else {
 						if($simulate == 0) {
 							$setup->log_event("Skipping MySQL hardening...");
 						}
 						print "Skipping MySQL hardedning on user Command\n";
-						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
+						print colored("Success: ", "bold green") . "LNMP stack has been installed!\n";
 						exit 1;
 					}
 				} # end pkg_mgr apt-get test
