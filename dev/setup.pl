@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.8
+# version 0.1.2.9
 
 use warnings;
 use strict;
@@ -129,6 +129,13 @@ if($category_choice eq "1") {
 						$setup->pkg_mgr() eq "apt-get" ? "PHP 5.5.x" : ""	# ppa:ondrej/php5-experimental
 					]
 				);
+				my $lighttpd = get_user_option(
+					"Please select which version of Lighttpd you wish to install and press [ENTER]:",
+					[
+						"Lighttpd 1.4.28",
+						"Lighttpd 1.4.32 (latest)"
+					]
+				);
 				my $llmp = "";
 				if($setup->pkg_mgr() eq "apt-get") {
 					if($php ne "1") {
@@ -153,7 +160,25 @@ if($category_choice eq "1") {
 							}
 							my $decision = get_user_yesno("Install PHP 5.3.x instead");
 							if($simulate == 0) {
-								$setup->log_event("Installing PHP 5.3.x instead!");
+								$setup->log_event("Installing PHP 5.3.x!");
+							}
+						}
+					}
+					if($lighttpd ne "1") {
+						my $decision = get_user_yesno("Ubuntu does not have an official repository for Lighttpd 1.4.32. Would you like to add one now", 1);
+						if($decision =~ /y|yes/i) {
+							if($simulate == 0) {
+								add_repo("ppa:nathan-renniewaldock/ppa");
+							} else {
+								print "Adding ppa:nathan-renniewaldock/ppa\n";
+							}
+						} else {
+							if($simulate == 0) {
+								$setup->log_event("Cancelling Lighttpd 1.4.32 install...");
+							}
+							my $decision = get_user_yesno("Install Lighttpd 1.4.28 instead");
+							if($simulate == 0) {
+								$setup->log_event("Installing Lighttpd 1.4.28!");
 							}
 						}
 					}
@@ -295,13 +320,19 @@ sub get_user_yesno {
 
 sub add_repo {
 	my $repo 		= shift;
+	my $exists		= `add-apt-repository`;
 	if($setup->pkg_mgr() ne "apt-get") {
 		print "Not necessary for yum manager, skipping...";
 	} else {
 		if($simulate == 0) {
 			$setup->log_event("Backing up /etc/apt/sources.list file just in case.");
 			system("cp /etc/apt/sources.list /etc/apt/sources.list.bak");
-			system("apt-get -y install python-software-properties");
+			$setup->log_event("Backup complete!");
+			if(!$exists) {
+				$setup->log_event("Installing dependencies for add-apt-repository");
+				system("apt-get -y install python-software-properties");
+				$setup->log_event("Install complete! add-apt-repository is now available!");
+			}
 			$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
 			$setup->log_event("Adding " . $repo . " to sources.list");
 			system("add-apt-repository " . $repo);
