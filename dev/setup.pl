@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.4
+# version 0.1.2.5
 
 use warnings;
 use strict;
@@ -114,7 +114,7 @@ if($category_choice eq "1") {
 						if($simulate == 0) {
 							$setup->log_event("Skipping MySQL hardening...");
 						}
-						print "Skipping MySQL hardedning on user Command\n";
+						print "Skipping MySQL hardening on user Command\n";
 						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
 						exit 1;
 					}
@@ -159,6 +159,7 @@ if($category_choice eq "1") {
 					}
 					$llmp = "lighttpd php5 php5-cgi php5-mysql php5-mcrypt php5-cli php5-curl php5-gd mysql-client-5.5 mysql-server-5.5 mysql-server";
 					if($simulate == 0) {
+						my $lighttpd_conf = "/etc/lighttpd/lighttpd.conf";
 						$setup->log_event("Starting LLMP install...");
 						system("sudo apt-get -y install " . $llmp);
 						$setup->log_event("LLMP install complete!");
@@ -166,11 +167,21 @@ if($category_choice eq "1") {
 						system("sudo lighty-enable-mod fastcgi");
 						$setup->log_event("Fastcgi modules enabled!");
 						$setup->log_event("Backing up lighttpd.conf file...");
-						system("sudo cp /etc/lighttpd/lighttp.conf /etc/lighttpd/lighttp.conf.bak");
-						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttp.conf.bak", "bold yellow"));
-						$setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
-						system('sudo echo "fastcgi.server = (\".php\" => ((\"bin-path\" => \"/usr/bin/php-cgi\", \"socket\" => \"/tmp/php.socket\")))" >> /etc/lighttpd/lighttpd.conf');
-						$setup->log_event("Log has been updated!");
+						system("sudo cp " . $lighttpd_conf . " /etc/lighttpd/lighttpd.conf.bak");
+						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttpd.conf.bak", "bold yellow"));
+
+$setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
+open my $handle, ">>", $lighttpd_conf or die $!;
+# spacing counts, hence the indentation
+print $handle 'fastcgi.server = (
+	".php" => ((
+		"bin-path" => "/usr/bin/php-cgi",
+		"socket" => "/tmp/php.socket"
+	))
+)'."\n";
+close $handle;
+$setup->log_event("Log has been updated!");
+
 						$setup->log_event("Restarting Lighttpd");
 						system("sudo service lighttpd restart");
 					} else {
