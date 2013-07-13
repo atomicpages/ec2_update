@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.3
+# version 0.1.3.5
 
 use warnings;
 use strict;
@@ -195,7 +195,7 @@ if($category_choice eq "1") {
 						system("cp " . $lighttpd_conf . " /etc/lighttpd/lighttpd.conf.bak");
 						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttpd.conf.bak", "bold yellow"));
 
-$setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
+$setup->log_event("Appending values to lighttpd.conf file...");
 open my $handle, ">>", $lighttpd_conf or die $!;
 # spacing counts, hence the indentation
 print $handle "\n".'fastcgi.server = (
@@ -205,7 +205,7 @@ print $handle "\n".'fastcgi.server = (
 	))
 )'."\n";
 close $handle;
-$setup->log_event("Log has been updated!");
+$setup->log_event("lighttpd.conf has been updated!");
 
 						$setup->log_event("Restarting Lighttpd");
 						system("service lighttpd restart");
@@ -302,14 +302,54 @@ $setup->log_event("Log has been updated!");
 						system("cp " . $nginx_def . " /etc/nginx/sites-available/default.bak");
 
 $setup->log_event("Writing values to " . $nginx_def);
-open my $handle, ">>", $nginx_def or die $!;
+open my $handle, ">", $nginx_def or die $!;
 # spacing counts, hence the indentation
-# print $handle "\n".'fastcgi.server = (
-#	".php" => ((
-#		"bin-path" => "/usr/bin/php-cgi",
-#		"socket" => "/tmp/php.socket"
-#	))
-#)'."\n";
+print $handle "server {
+	listen 80 default_server;
+	listen [::]:80 default_server ipv6only=on;
+
+	root /usr/share/nginx/html;
+	index index.html index.htm index.php;
+
+	# Make site accessible from http://localhost/
+	server_name localhost;
+
+	location / {
+		# First attempt to serve request as file, then
+		# as directory, then fall back to displaying a 404.
+		try_files $uri $uri/ /index.html;
+	}
+
+	location /doc/ {
+		alias /usr/share/doc/;
+		autoindex on;
+		allow 127.0.0.1;
+		allow ::1;
+		deny all;
+	}
+
+	# error_page 404 /404.html;
+
+	# redirect server error pages to the static page /50x.html
+	error_page 500 502 503 504 /50x.html;
+	location = /50x.html {
+		root /usr/share/nginx/html;
+	}
+
+	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
+	location ~ \.php$ {
+		try_files $uri = 404;
+		fastcgi_pass 127.0.0.1:9000;
+		fastcgi_index index.php;
+		include fastcgi_params;
+	}
+
+	# deny access to .htaccess files, if Apache's document root
+	# concurs with nginx's one
+	location ~ /\.ht {
+		deny all;
+	}
+}\n";
 close $handle;
 $setup->log_event("Wrote new values to " . $nginx_def);
 
