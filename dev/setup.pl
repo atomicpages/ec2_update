@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2
+# version 0.1.2.1
 
 use warnings;
 use strict;
@@ -130,7 +130,7 @@ if($category_choice eq "1") {
 					]
 				);
 				my $llmp = "";
-				if($setup->pkg_mgr() == "apt-get") {
+				if($setup->pkg_mgr() eq "apt-get") {
 					if($php ne "1") {
 						my $decision = get_user_yesno("Ubuntu does not officially have a repository for PHP 5.4.x or 5.5.x. Would you like to add one now", 1);
 						if($decision =~ /y|yes/i) {
