@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.9
+# version 0.1.2.10
 
 use warnings;
 use strict;
@@ -188,9 +188,9 @@ if($category_choice eq "1") {
 						$setup->log_event("Starting LLMP install...");
 						system("apt-get -y install " . $llmp);
 						$setup->log_event("LLMP install complete!");
-						$setup->log_event("Enabling fastcgi and SSL modules");
+						$setup->log_event("Enabling fastcgi module");
 						system("lighty-enable-mod fastcgi");
-						$setup->log_event("Fastcgi modules enabled!");
+						$setup->log_event("Fastcgi module enabled!");
 						$setup->log_event("Backing up lighttpd.conf file...");
 						system("cp " . $lighttpd_conf . " /etc/lighttpd/lighttpd.conf.bak");
 						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttpd.conf.bak", "bold yellow"));
