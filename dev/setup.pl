@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.3
+# version 0.1.2.4
 
 use warnings;
 use strict;
@@ -171,6 +171,8 @@ if($category_choice eq "1") {
 						$setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
 						system('sudo echo "fastcgi.server = (\".php\" => ((\"bin-path\" => \"/usr/bin/php-cgi\", \"socket\" => \"/tmp/php.socket\")))" >> /etc/lighttpd/lighttpd.conf');
 						$setup->log_event("Log has been updated!");
+						$setup->log_event("Restarting Lighttpd");
+						system("sudo service lighttpd restart");
 					} else {
 						print "sudo apt-get -y install " . $llmp . "\n";
 						print "sudo lighty-enable-mod fastcgi\n";
