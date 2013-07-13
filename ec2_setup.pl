@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.6.7.3
+# version 0.6.7.4
 
 use warnings;
 use strict;
@@ -16,8 +16,6 @@ print colored("Disclaimer: ", "bold yellow") . "This script does the best to pre
 installation. We do our best to keep this script updated. We are in no way responsible
 for the misuse of or the altercation of this script. Only download from the official 
 repository in order to have the best experience using this script.\n\n";
-
-# print "Please type the number of the category of software you wish to install and press [ENTER]: \n";
 
 my $setup = EC2_Setup->new;
 my $categories = ["Web Servers + Scripting Languages", "Web Server"];
@@ -102,9 +100,9 @@ if($category_choice eq "1") {
 				} else { # assume aptitude for the time being
 					if($apache eq "1") {
 						$lamp = "lamp-server^";
-					} else($apache eq "2") {
+					} elsif($apache eq "2") {
 						my $decision = get_user_yesno(
-							colored("Warning: ", "bold yellow") . "You chose to install Apache 2.4. Unfortunately aptitude does not have an official PPA for Apache 2.4. Do you wish to add http://ppa.launchpad.net/rhardy/apache24x/ " . $setup->codename() . " main to your list of repositories",
+							colored("Warning: ", "bold yellow") . "You chose to install Apache 2.4. Unfortunately aptitude does not have an official PPA for Apache 2.4. Do you wish to add http://ppa.launchpad.net/ondrej/php5-experimental/ubuntu " . $setup->codename() . " main to your list of repositories",
 							1
 						);
 						if($decision =~ /y|yes/i) {
@@ -121,16 +119,17 @@ if($category_choice eq "1") {
 					}
 					$setup->log_event("Starting LAMP install...");
 					system("sudo apt-get -y install " . $lamp);
-					$secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
+					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
 					if($secure_mysql =~ /y|yes/i) {
 						$setup->log_event("Securing MySQL");
 						system("sudo mysql_secure_installation");
 						$setup->log_event("MySQL has been secured based on user options!");
-						print colored("Success: ", "bold green") . "LAMP stack has been installed!";
+						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
 						exit 1;
 					} else {
 						$setup->log_event("Skipping MySQL hardening...");
-						print colored("Success: ", "bold green") . "LAMP stack has been installed!";
+						print "Skipping MySQL hardedning on user Command\n";
+						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
 						exit 1;
 					}
 				}
@@ -428,9 +427,9 @@ sub add_repo {
 	} else {
 		$setup->log_event("Backing up /etc/apt/sources.list file just in case.");
 		system("sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak");
-		$setup->log_event("Installing python-software-properties");
-		my $exist = system("add-apt-repository");
+		my $exist = system("sudo add-apt-repository --help");
 		if($exist == -1) {
+			$setup->log_event("add-apt-repository is not installed, python-software-properties will be installed");
 			system("sudo apt-get -y install python-software-properties");
 		}
 		$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
