@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.1
+# version 0.1.2.2
 
 use warnings;
 use strict;
@@ -162,8 +162,18 @@ if($category_choice eq "1") {
 						$setup->log_event("Starting LLMP install...");
 						system("sudo apt-get -y install " . $llmp);
 						$setup->log_event("LLMP install complete!");
+						$setup->log_event("Enabling fastcgi and SSL modules");
+						system("sudo lighty-enable-mod fastcgi");
+						$setup->log_event("Fastcgi modules enabled!");
+						$setup->log_event("Backing up lighttpd.conf file...")
+						system("sudo cp /etc/lighttpd/lighttp.conf /etc/lighttpd/lighttp.conf.bak");
+						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttp.conf.bak", "bold yellow"));
+						$setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
+						system('sudo echo "fastcgi.server = (\".php\" => ((\"bin-path\" => \"/usr/bin/php-cgi\", \"socket\" => \"/tmp/php.socket\")))" >> /etc/lighttpd/lighttpd.conf');
+						$setup->log_event("Log has been updated!");
 					} else {
 						print "sudo apt-get -y install " . $llmp . "\n";
+						print "sudo lighty-enable-mod fastcgi\n";
 					}
 
 					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
@@ -175,14 +185,14 @@ if($category_choice eq "1") {
 						} else {
 							print "sudo mysql_secure_installation\n";
 						}
-						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
+						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
 						exit 1;
 					} else {
 						if($simulate == 0) {
 							$setup->log_event("Skipping MySQL hardening...");
 						}
 						print "Skipping MySQL hardedning on user Command\n";
-						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
+						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
 						exit 1;
 					}
 				} # end pkg_mgr apt-get test
