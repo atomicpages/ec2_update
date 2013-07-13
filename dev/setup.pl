@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.2
+# version 0.1.3.3
 
 use warnings;
 use strict;
@@ -291,30 +291,32 @@ $setup->log_event("Log has been updated!");
 							}
 						}
 					}
-					$lnmp = "nginx php5-fpm mysql-client-5.5 mysql-server-5.5 mysql-server";
-					$php = "php5 php5-mysql php5-mcrypt php5-cli php5-curl php5-gd";
+					$lnmp = "nginx php5-fpm mysql-client-5.5 mysql-server-5.5 mysql-server php5 php5-mysql php5-mcrypt php5-cli php5-curl php5-gd";
 					if($simulate == 0) {
-						my $nginx_conf = "/etc/nginx/nginx.conf";
+						my $nginx_def = "/etc/nginx/sites-available/default";
 						$setup->log_event("Starting Nginx and PHP5-FPM install...");
 						system("apt-get -y install " . $lnmp);
 						$setup->log_event("Nginx and PHP5-FPM install complete!");
 
-						$setup->log_event("Backing up " . $nginx_conf);
-						system("cp " . $nginx_conf . " /etc/nginx/nginx.conf.bak");
+						$setup->log_event("Backing up " . $nginx_def);
+						system("cp " . $nginx_def . " /etc/nginx/sites-available/default.bak");
 
-						$setup->log_event("Writing values to " . $nginx_conf);
-						open my $in , "<", $nginx_conf or die "Can't read to $nginx_conf: $!\n";
-						open my $out, ">", $nginx_conf or die "Can't write $nginx_conf: $!\n";
-						while(<$in>) {
-							my $worker = /s\b("worker_processes")\s{1,}\d{1,}/("worker_processes 5")/g;
-							my $keepalive = /s\b("keepalive_timeout")\s{1,}\d{1,}/("keepalive_timeout 2")/g;
-							print $out $_;
-						}
-						close $out;
-						$setup->log_event("Wrote new values to " . $nginx_conf);
+$setup->log_event("Writing values to " . $nginx_def);
+open my $handle, ">>", $nginx_def or die $!;
+# spacing counts, hence the indentation
+# print $handle "\n".'fastcgi.server = (
+#	".php" => ((
+#		"bin-path" => "/usr/bin/php-cgi",
+#		"socket" => "/tmp/php.socket"
+#	))
+#)'."\n";
+close $handle;
+$setup->log_event("Wrote new values to " . $nginx_def);
 
 						$setup->log_event("Starting nginx service");
-						system("system nginx start");
+						system("service nginx start");
+						$setup->log_event("Restarting FPM service");
+						system("service php5-fpm restart");
 					} else {
 						print "apt-get -y install " . $lnmp . "\n";
 					}
@@ -427,6 +429,7 @@ sub get_user_yesno {
 
 sub add_repo {
 	my $repo 		= shift;
+	my $defer		= shift;
 	my $exists		= `add-apt-repository`;
 	if($setup->pkg_mgr() ne "apt-get") {
 		print "Not necessary for yum manager, skipping...";
@@ -443,9 +446,11 @@ sub add_repo {
 			$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
 			$setup->log_event("Adding " . $repo . " to sources.list");
 			system("add-apt-repository " . $repo);
-			$setup->log_event("Updating sources list...");
-			system("apt-get update");
-			$setup->log_event("Sources list update complete, resuming...");
+			if($defer != 1) {
+				$setup->log_event("Updating sources list...");
+				system("apt-get update");
+				$setup->log_event("Sources list update complete, resuming...");
+			}
 		} else {
 			$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
 			print "Adding " . $repo . "\n";
