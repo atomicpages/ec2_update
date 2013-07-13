@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.0
+# version 0.1.3.1
 
 use warnings;
 use strict;
@@ -244,6 +244,13 @@ $setup->log_event("Log has been updated!");
 						$setup->pkg_mgr() eq "apt-get" ? "PHP 5.5.x" : ""	# ppa:ondrej/php5-experimental
 					]
 				);
+				my $nginx = get_user_option(
+					"Please select the version of Nginx you wish to install",
+					[
+						"Nginx 1.1.x",
+						"Nginx 1.4.x (latest)"
+					]
+				);
 				my $lnmp = "";
 				if($setup->pkg_mgr() eq "apt-get") {
 					if($php ne "1") {
@@ -272,13 +279,44 @@ $setup->log_event("Log has been updated!");
 							}
 						}
 					}
-					$lnmp = "nginx php5 php5-cgi php5-mysql php5-mcrypt php5-cli php5-curl php5-gd mysql-client-5.5 mysql-server-5.5 mysql-server";
+					if($nginx ne "1") {
+						my $decision = get_user_yesno("Would you like to add the " . colored("official", "bold") . " nginx ppa for 1.4.x", 1);
+						if($decision =~ /y|yes/i) {
+							add_repo("ppa:nginx/stable");
+						} else {
+							$setup->log_event("Cancelling Nginx 1.4.x install...");
+							my $decision = get_user_yesno("Install Nginx 1.1.x instead");
+							if($decision =~ /y|yes/i) {
+								$setup->log_event("Installing Nginx 1.1.x instead!");
+							}
+						}
+					}
+					$lnmp = "nginx php5-fpm mysql-client-5.5 mysql-server-5.5 mysql-server";
+					$php = "php5 php5-mysql php5-mcrypt php5-cli php5-curl php5-gd";
 					if($simulate == 0) {
-						$setup->log_event("Starting LNMP stack install...");
+						my $nginx_conf = "/etc/nginx/nginx.conf";
+						$setup->log_event("Starting Nginx and PHP5-FPM install...");
 						system("apt-get -y install " . $lnmp);
-						$setup->log_event("LNMP stack install complete!");
+						$setup->log_event("Nginx and PHP5-FPM install complete!");
+
+						$setup->log_event("Backing up " . $nginx_conf);
+						system("cp " . $nginx_conf . " /etc/nginx/nginx.conf.bak");
+
+						$setup->log_event("Writing values to " . $nginx_conf);
+						open my $in , "<", $file or die "Can't read old file: $!\n";
+						open my $out, ">", $file or die "Can't write new file: $!\n";
+						while(<$in>) {
+							my $worker = /s\b(worker_processes)\b\s{1,}\d{1,}/worker_processes 5/g;
+							my $keepalive = /s\b(keepalive_timeout)\b\s{1,}\d{1,}/keepalive_timeout 2/g;
+							print $out $_;
+						}
+						close $out;
+						$setup->log_event("Wrote new values to " . $nginx_conf);
+
+						$setup->log_event("Starting nginx service");
+						system("system nginx start");
 					} else {
-						print "apt-get -y install" . $lnmp . "\n";
+						print "apt-get -y install " . $lnmp . "\n";
 					}
 
 					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
