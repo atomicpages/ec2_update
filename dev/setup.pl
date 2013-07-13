@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.10
+# version 0.1.3.0
 
 use warnings;
 use strict;
@@ -236,7 +236,71 @@ $setup->log_event("Log has been updated!");
 				} # end pkg_mgr apt-get test
 			} # end case 2
 			case 3 {
+				my $php = get_user_option(
+					"Please select your preferred PHP version and press [ENTER]:",
+					[
+						"PHP 5.3.x",										# default
+						"PHP 5.4.x", 										# ppa:ondrej/php5
+						$setup->pkg_mgr() eq "apt-get" ? "PHP 5.5.x" : ""	# ppa:ondrej/php5-experimental
+					]
+				);
+				my $lnmp = "";
+				if($setup->pkg_mgr() eq "apt-get") {
+					if($php ne "1") {
+						my $decision = get_user_yesno("Ubuntu does not officially have a repository for PHP 5.4.x or 5.5.x. Would you like to add one now", 1);
+						if($decision =~ /y|yes/i) {
+							if($php eq "2") {
+								if($simulate == 0) {
+									add_repo("ppa:ondrej/php5");
+								} else {
+									print "Adding ppa:ondrej/php5\n";
+								}
+							} elsif($php eq "3") {
+								if($simulate == 0) {
+									add_repo("ppa:ondrej/php5-experimental");
+								} else {
+									print "Adding ppa:ondrej/php5-experimental\n";
+								}
+							}
+						} else {
+							if($simulate == 0) {
+								$setup->log_event("Cancelling PHP 5.4.x or 5.5.x install...");
+							}
+							my $decision = get_user_yesno("Install PHP 5.3.x instead");
+							if($simulate == 0) {
+								$setup->log_event("Installing PHP 5.3.x!");
+							}
+						}
+					}
+					$lnmp = "nginx php5 php5-cgi php5-mysql php5-mcrypt php5-cli php5-curl php5-gd mysql-client-5.5 mysql-server-5.5 mysql-server";
+					if($simulate == 0) {
+						$setup->log_event("Starting LNMP stack install...");
+						system("apt-get -y install " . $lnmp);
+						$setup->log_event("LNMP stack install complete!");
+					} else {
+						print "apt-get -y install" . $lnmp . "\n";
+					}
 
+					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
+					if($secure_mysql =~ /y|yes/i) {
+						if($simulate == 0) {
+							$setup->log_event("Securing MySQL");
+							system("mysql_secure_installation");
+							$setup->log_event("MySQL has been secured based on user options!");
+						} else {
+							print "mysql_secure_installation\n";
+						}
+						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
+						exit 1;
+					} else {
+						if($simulate == 0) {
+							$setup->log_event("Skipping MySQL hardening...");
+						}
+						print "Skipping MySQL hardedning on user Command\n";
+						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
+						exit 1;
+					}
+				} # end pkg_mgr apt-get test
 			} # end case 3
 			case 4 {
 
@@ -250,6 +314,11 @@ $setup->log_event("Log has been updated!");
 
 # GENERAL HELPER FUNCTIONS
 # ----------------------------------------------------------------- #
+sub php_choices {
+	# dump all php choices here, it will happen three times in the scrip
+	# so we may as well add it to a function
+}
+
 sub harden_mysql {
 	my $stack 			= shift;
 	my $secure_mysql 	= get_user_yesno("Would you like to secure MySQL server", 1);
