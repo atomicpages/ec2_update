@@ -427,11 +427,7 @@ sub add_repo {
 	} else {
 		$setup->log_event("Backing up /etc/apt/sources.list file just in case.");
 		system("sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak");
-		my $exist = system("sudo add-apt-repository --help");
-		if($exist == -1) {
-			$setup->log_event("add-apt-repository is not installed, python-software-properties will be installed");
-			system("sudo apt-get -y install python-software-properties");
-		}
+		system("sudo apt-get -y install python-software-properties");
 		$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
 		$setup->log_event("Adding " . $repo . " to sources.list");
 		system("sudo add-apt-repository " . $repo);
