@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.5
+# version 0.1.2.6
 
 use warnings;
 use strict;
@@ -33,7 +33,7 @@ if($simulate == 0) {
 	if($setup->pkg_mgr() eq "apt-get") {
 		if($update =~ /y|yes/i) {
 			$setup->log_event("Updating aptitude repository...");
-			system("sudo apt-get update && sudo apt-get -y upgrade");
+			system("apt-get update && apt-get -y upgrade");
 			$setup->log_event("Aptitude repository update complete!");
 		}
 	}
@@ -93,20 +93,20 @@ if($category_choice eq "1") {
 					}
 					if($simulate == 0) {
 						$setup->log_event("Starting LAMP install...");
-						system("sudo apt-get -y install " . $lamp);
+						system("apt-get -y install " . $lamp);
 						$setup->log_event("LAMP install complete!");
 					} else {
-						print "sudo apt-get -y install " . $lamp . "\n";
+						print "apt-get -y install " . $lamp . "\n";
 					}
 
 					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
 					if($secure_mysql =~ /y|yes/i) {
 						if($simulate == 0) {
 							$setup->log_event("Securing MySQL");
-							system("sudo mysql_secure_installation");
+							system("mysql_secure_installation");
 							$setup->log_event("MySQL has been secured based on user options!");
 						} else {
-							print "sudo mysql_secure_installation\n";
+							print "mysql_secure_installation\n";
 						}
 						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
 						exit 1;
@@ -161,13 +161,13 @@ if($category_choice eq "1") {
 					if($simulate == 0) {
 						my $lighttpd_conf = "/etc/lighttpd/lighttpd.conf";
 						$setup->log_event("Starting LLMP install...");
-						system("sudo apt-get -y install " . $llmp);
+						system("apt-get -y install " . $llmp);
 						$setup->log_event("LLMP install complete!");
 						$setup->log_event("Enabling fastcgi and SSL modules");
-						system("sudo lighty-enable-mod fastcgi");
+						system("lighty-enable-mod fastcgi");
 						$setup->log_event("Fastcgi modules enabled!");
 						$setup->log_event("Backing up lighttpd.conf file...");
-						system("sudo cp " . $lighttpd_conf . " /etc/lighttpd/lighttpd.conf.bak");
+						system("cp " . $lighttpd_conf . " /etc/lighttpd/lighttpd.conf.bak");
 						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttpd.conf.bak", "bold yellow"));
 
 $setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
@@ -183,20 +183,20 @@ close $handle;
 $setup->log_event("Log has been updated!");
 
 						$setup->log_event("Restarting Lighttpd");
-						system("sudo service lighttpd restart");
+						system("service lighttpd restart");
 					} else {
-						print "sudo apt-get -y install " . $llmp . "\n";
-						print "sudo lighty-enable-mod fastcgi\n";
+						print "apt-get -y install " . $llmp . "\n";
+						print "lighty-enable-mod fastcgi\n";
 					}
 
 					my $secure_mysql = get_user_yesno("Would you like to secure MySQL server", 1);
 					if($secure_mysql =~ /y|yes/i) {
 						if($simulate == 0) {
 							$setup->log_event("Securing MySQL");
-							system("sudo mysql_secure_installation");
+							system("mysql_secure_installation");
 							$setup->log_event("MySQL has been secured based on user options!");
 						} else {
-							print "sudo mysql_secure_installation\n";
+							print "mysql_secure_installation\n";
 						}
 						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
 						exit 1;
@@ -232,10 +232,10 @@ sub harden_mysql {
 	if($secure_mysql =~ /y|yes/i) {
 		if($simulate == 0) {
 			$setup->log_event("Securing MySQL");
-			system("sudo mysql_secure_installation");
+			system("mysql_secure_installation");
 			$setup->log_event("MySQL has been secured based on user options!");
 		} else {
-			print "sudo mysql_secure_installation\n";
+			print "mysql_secure_installation\n";
 		}
 		print colored("Success: ", "bold green") . $stack . " stack has been installed!\n";
 		exit 1;
@@ -300,13 +300,13 @@ sub add_repo {
 	} else {
 		if($simulate == 0) {
 			$setup->log_event("Backing up /etc/apt/sources.list file just in case.");
-			system("sudo cp /etc/apt/sources.list /etc/apt/sources.list.bak");
-			system("sudo apt-get -y install python-software-properties");
+			system("cp /etc/apt/sources.list /etc/apt/sources.list.bak");
+			system("apt-get -y install python-software-properties");
 			$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
 			$setup->log_event("Adding " . $repo . " to sources.list");
-			system("sudo add-apt-repository " . $repo);
+			system("add-apt-repository " . $repo);
 			$setup->log_event("Updating sources list...");
-			system("sudo apt-get update");
+			system("apt-get update");
 			$setup->log_event("Sources list update complete, resuming...");
 		} else {
 			$repo = ($repo !~ /^ppa:/i) ? ("ppa:" . $repo) : $repo;
