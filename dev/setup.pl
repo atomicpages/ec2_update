@@ -1,4 +1,5 @@
 #! /usr/bin/env perl
+# version 0.1.1
 
 use warnings;
 use strict;
@@ -80,7 +81,7 @@ if($category_choice eq "1") {
 						);
 						if($decision =~ /y|yes/i) {
 							add_repo("ppa:ondrej/php5-experimental");
-							$lamp = "apache2 php5 php5-cgi php5-mysql php5-mcrypt mysql-client-5.5 mysql-server-5.5 mysql-server";
+							$lamp = "apache2 php5 php5-cgi php5-mysql php5-mcrypt php5-cli php5-curl php5-gd libapache2-mod-php5 mysql-client-5.5 mysql-server-5.5 mysql-server";
 						} else {
 							$setup->log_event("User did not want to install Apache 2.4.x...");
 							my $decision = get_user_yesno("Install Apache 2.2 instead");
