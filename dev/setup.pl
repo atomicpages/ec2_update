@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.2.7
+# version 0.1.2.8
 
 use warnings;
 use strict;
@@ -167,8 +167,8 @@ if($category_choice eq "1") {
 						system("lighty-enable-mod fastcgi");
 						$setup->log_event("Fastcgi modules enabled!");
 						$setup->log_event("Backing up lighttpd.conf file...");
-						system("cp " . $lighttpd_conf . " " . $lighttpd_conf ." .bak");
-						$setup->log_event("Backup found at " . colored($lighttpd_conf . ".bak", "bold yellow"));
+						system("cp " . $lighttpd_conf . " /etc/lighttpd/lighttpd.conf.bak");
+						$setup->log_event("Backup found at " . colored("/etc/lighttpd/lighttpd.conf.bak", "bold yellow"));
 
 $setup->log_event("Updating lighttpd.conf file to allow php scripts to run");
 open my $handle, ">>", $lighttpd_conf or die $!;
