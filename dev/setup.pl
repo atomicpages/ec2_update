@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# version 0.1.3.8
+# version 0.1.3.9
 
-use warnings;
+use warnings
 use strict;
 use feature qw(say);
 use Switch;
@@ -239,7 +239,7 @@ $setup->log_event("lighttpd.conf has been updated!");
 				my $php = get_user_option(
 					"Please select your preferred PHP version and press [ENTER]:",
 					[
-						"PHP 5.3.x",										# default
+						"PHP 5.3.x",										# default | works
 						"PHP 5.4.x", 										# ppa:ondrej/php5
 						$setup->pkg_mgr() eq "apt-get" ? "PHP 5.5.x" : ""	# ppa:ondrej/php5-experimental
 					]
@@ -347,7 +347,8 @@ print $handle 'server {
 	# pass the PHP scripts to FastCGI server listening on 127.0.0.1:9000
 	location ~ \.php$ {
 		try_files $uri = 404;
-		fastcgi_pass 127.0.0.1:9000;
+	#	fastcgi_pass 127.0.0.1:9000;
+		fastcgi_pass unix:/var/run/php5-fpm.sock;
 		fastcgi_index index.php;
 		include fastcgi_params;
 	}
