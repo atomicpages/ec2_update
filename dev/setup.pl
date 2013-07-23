@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.7
+# version 0.1.3.8
 
 use warnings;
 use strict;
@@ -301,7 +301,6 @@ $setup->log_event("lighttpd.conf has been updated!");
 						$setup->log_event("Starting Nginx and PHP5-FPM install...");
 						system("apt-get -y install " . $lnmp);
 						$setup->log_event("Nginx and PHP5-FPM install complete!");
-
 						$setup->log_event("Backing up " . $nginx_def);
 						system("cp " . $nginx_def . " /etc/nginx/sites-available/default.bak");
 
@@ -366,6 +365,11 @@ $setup->log_event("Wrote new values to " . $nginx_def);
 						system("service nginx start");
 						$setup->log_event("Restarting PHP5-FPM service");
 						system("service php5-fpm restart");
+						if($nginx eq "1") {
+							$setup->log_event("Renaming /usr/share/nginx/www to /usr/share/nginx/html");
+							system("sudo mv /usr/share/nginx/www /usr/share/nginx/html");
+							$setup->log_event("Renaming complete!");
+						}
 					} else {
 						print "apt-get -y install " . $lnmp . "\n";
 					}
