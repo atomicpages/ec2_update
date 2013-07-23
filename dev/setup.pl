@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.6
+# version 0.1.3.7
 
 use warnings;
 use strict;
@@ -16,10 +16,10 @@ installation. We do our best to keep this script updated. We are in no way respo
 for the misuse of or the altercation of this script. Only download from the official 
 repository in order to have the best experience using this script.\n\n";
 
-my $simulate = 1;
+my $simulate = 0;
 
 my $setup = EC2_Setup->new;
-my $categories = ["Web Servers + Scripting Languages", "Web Server"];
+my $categories = ["Web Servers + Scripting Languages", "Web Servers"];
 my $servers_and_langs = [
 	"PHP + Apache + MySQL", 
 	"PHP + Lighttpd + MySQL", 
@@ -49,7 +49,7 @@ if($category_choice eq "1") {
 		"Please select your preferred scripting language + web server from the list below and press [ENTER]:", 
 		$servers_and_langs
 	);
-	my $option = lc( @$servers_and_langs[$server_lang - 1] );
+	my $option = lc( @$servers_and_langs[ $server_lang - 1 ] );
 	$setup->log_event($option . " chosen");
 
 	if($setup->distro() eq "amazon" || $setup->distro() eq "ubuntu") {
@@ -247,8 +247,8 @@ $setup->log_event("lighttpd.conf has been updated!");
 				my $nginx = get_user_option(
 					"Please select the version of Nginx you wish to install",
 					[
-						"Nginx 1.1.x",
-						"Nginx 1.4.x (latest)"
+						"Nginx 1.1.x",										# default
+						"Nginx 1.4.x (latest)"								# ppa:nginx/stable
 					]
 				);
 				my $lnmp = "";
@@ -258,13 +258,13 @@ $setup->log_event("lighttpd.conf has been updated!");
 						if($decision =~ /y|yes/i) {
 							if($php eq "2") {
 								if($simulate == 0) {
-									add_repo("ppa:ondrej/php5");
+									add_repo("ppa:ondrej/php5", ($nginx eq "2" ? 1 : 0));
 								} else {
 									print "Adding ppa:ondrej/php5\n";
 								}
 							} elsif($php eq "3") {
 								if($simulate == 0) {
-									add_repo("ppa:ondrej/php5-experimental");
+									add_repo("ppa:ondrej/php5-experimental", ($nginx eq "2" ? 1 : 0));
 								} else {
 									print "Adding ppa:ondrej/php5-experimental\n";
 								}
@@ -332,6 +332,11 @@ print $handle 'server {
 		deny all;
 	}
 
+	location /images/ {
+		root /usr/share;
+		autoindex off;
+	}
+
 	# error_page 404 /404.html;
 
 	# redirect server error pages to the static page /50x.html
@@ -359,7 +364,7 @@ $setup->log_event("Wrote new values to " . $nginx_def);
 
 						$setup->log_event("Starting nginx service");
 						system("service nginx start");
-						$setup->log_event("Restarting FPM service");
+						$setup->log_event("Restarting PHP5-FPM service");
 						system("service php5-fpm restart");
 					} else {
 						print "apt-get -y install " . $lnmp . "\n";
