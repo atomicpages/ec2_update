@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
-# version 0.1.3.9
+# version 0.1.3.10
 
-use warnings
+use warnings;
 use strict;
 use feature qw(say);
 use Switch;
