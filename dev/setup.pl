@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# version 0.1.3.10
+# version 0.1.3.11
 
 use warnings;
 use strict;
@@ -229,7 +229,7 @@ $setup->log_event("lighttpd.conf has been updated!");
 						if($simulate == 0) {
 							$setup->log_event("Skipping MySQL hardening...");
 						}
-						print "Skipping MySQL hardedning on user Command\n";
+						print "Skipping MySQL hardening on user Command\n";
 						print colored("Success: ", "bold green") . "LLMP stack has been installed!\n";
 						exit 1;
 					}
@@ -282,11 +282,13 @@ $setup->log_event("lighttpd.conf has been updated!");
 					if($nginx ne "1") {
 						my $decision = get_user_yesno("Would you like to add the " . colored("official", "bold") . " nginx ppa for 1.4.x", 1);
 						if($decision =~ /y|yes/i) {
-							if($simulate == 0) {
-								add_repo("ppa:nginx/stable");
-							} else {
-								print "Adding ppa:nginx/stable\n";
+							if($nginx eq "2" && $php eq "3") {
+								print colored("Warning", "yellow bold") . " due to an issue with the php5-experimental PPA, we need to install php5-fpm BEFORE we update our source.list file. Performing this action now!";
+								$setup->log_event("Installing php5-fpm");
+								system("sudo apt-get install -y php5-fpm");
+								$setup->log_event("php5-fpm install complete, resuming...");
 							}
+							add_repo("ppa:nginx/stable");
 						} else {
 							$setup->log_event("Cancelling Nginx 1.4.x install...");
 							my $decision = get_user_yesno("Install Nginx 1.1.x instead");
@@ -295,11 +297,11 @@ $setup->log_event("lighttpd.conf has been updated!");
 							}
 						}
 					}
-					$lnmp = "nginx php5-fpm mysql-client-5.5 mysql-server-5.5 mysql-server php5 php5-mysql php5-mcrypt php5-cli php5-curl php5-gd";
+					$lnmp = "mysql-client-5.5 mysql-server-5.5 mysql-server nginx php5 php5-mysql php5-mcrypt php5-cli php5-curl php5-gd";
 					if($simulate == 0) {
 						my $nginx_def = "/etc/nginx/sites-available/default";
-						$setup->log_event("Starting Nginx and PHP5-FPM install...");
-						system("apt-get -y install " . $lnmp);
+						$setup->log_event("Starting Nginx and selected PHP install...");
+						system("apt-get -y install " . $lnmp . " && sudo apt-get upgrade -y");
 						$setup->log_event("Nginx and PHP5-FPM install complete!");
 						$setup->log_event("Backing up " . $nginx_def);
 						system("cp " . $nginx_def . " /etc/nginx/sites-available/default.bak");
@@ -390,7 +392,7 @@ $setup->log_event("Wrote new values to " . $nginx_def);
 						if($simulate == 0) {
 							$setup->log_event("Skipping MySQL hardening...");
 						}
-						print "Skipping MySQL hardedning on user Command\n";
+						print "Skipping MySQL hardening on user Command\n";
 						print colored("Success: ", "bold green") . "LNMP stack has been installed!\n";
 						exit 1;
 					}
@@ -431,7 +433,7 @@ sub harden_mysql {
 		if($simulate == 0) {
 			$setup->log_event("Skipping MySQL hardening...");
 		}
-		print "Skipping MySQL hardedning on user Command\n";
+		print "Skipping MySQL hardening on user Command\n";
 		print colored("Success: ", "bold green") . $stack . " stack has been installed!\n";
 		exit 1;
 	}

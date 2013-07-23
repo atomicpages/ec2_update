@@ -128,7 +128,7 @@ if($category_choice eq "1") {
 						exit 1;
 					} else {
 						$setup->log_event("Skipping MySQL hardening...");
-						print "Skipping MySQL hardedning on user Command\n";
+						print "Skipping MySQL hardening on user Command\n";
 						print colored("Success: ", "bold green") . "LAMP stack has been installed!\n";
 						exit 1;
 					}
